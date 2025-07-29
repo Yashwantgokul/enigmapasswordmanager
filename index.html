@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Enigma | Secure Signup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            background: rgba(0,0,0,0.7);
+            padding: 40px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 0 20px #00ffcc;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px #00ffcc; }
+            to { box-shadow: 0 0 25px #00ffcc; }
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00ffcc;
+            animation: flicker 1.5s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input {
+            background: rgba(255,255,255,0.1);
+            color: #00ffcc;
+            border-bottom: 2px solid transparent;
+            animation: slidein 0.6s ease-in-out forwards;
+        }
+
+        input:focus {
+            outline: none;
+            border-bottom: 2px solid #00ffcc;
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.03);
+        }
+
+        @keyframes slidein {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        button {
+            background-color: #00ffcc;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.4s;
+        }
+
+        button:hover {
+            background-color: #009988;
+            transform: scale(1.05);
+        }
+
+        .hidden { display: none; }
+
+        #message {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .neon {
+            text-shadow:
+                0 0 5px #00ffcc,
+                0 0 10px #00ffcc,
+                0 0 20px #00ffcc,
+                0 0 40px #00ffcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="neon">Enigma Sign Up</h2>
+        <input type="text" id="name" placeholder="Enter your name" required />
+        <input type="email" id="email" placeholder="Enter your email" required />
+        <input type="password" id="password" placeholder="Create master password" required />
+        <button onclick="sendOtp()">Send OTP</button>
+
+        <div id="otpSection" class="hidden">
+            <input type="text" id="otp" placeholder="Enter the OTP" />
+            <button onclick="verifyOtp()">Verify & Register</button>
+        </div>
+        <div id="message" class="neon"></div>
+    </div>
+
+    <script>
+        let signupData = {};
+
+        function sendOtp() {
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            fetch("http://127.0.0.1:5000/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    signupData = { name, email, password };
+                    document.getElementById("otpSection").classList.remove("hidden");
+                    showMessage("OTP Sent! Check your email.", "#00ffcc");
+                } else {
+                    showMessage(data.error || "Error occurred", "#ff6666");
+                }
+            });
+        }
+
+        function verifyOtp() {
+            const otp = document.getElementById("otp").value;
+            fetch("http://127.0.0.1:5000/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: signupData.email, otp })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    showMessage("Signup successful!", "#00ffcc");
+                } else {
+                    showMessage(data.error || "Error verifying OTP", "#ff6666");
+                }
+            });
+        }
+
+        function showMessage(msg, color) {
+            const messageBox = document.getElementById("message");
+            messageBox.innerText = msg;
+            messageBox.style.color = color;
+        }
+
+        // Flicker the tab title
+        let titles = ["⚡ ENIGMA SIGNUP ⚡", "ENIGMA | Protect Your Vault"];
+        let i = 0;
+        setInterval(() => {
+            document.title = titles[i % titles.length];
+            i++;
+        }, 900);
+    </script>
+</body>
+</html>
